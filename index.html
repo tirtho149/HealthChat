@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREC Health Intervention Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            max-height: 700px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            scroll-behavior: smooth;
+        }
+
+        .chat-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 18px;
+            max-width: 70px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            height: 10px;
+            width: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .quick-actions {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .quick-actions::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .quick-actions::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        #sendBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #sendBtn:active {
+            transform: scale(0.95);
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .welcome-screen h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .welcome-screen p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .quick-actions {
+                flex-wrap: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 GREC Health Assistant</h1>
+            <p>AI-Powered Syndemic Management Support</p>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="welcome-screen">
+                <h2>Welcome to Your Health Companion</h2>
+                <p>I'm here to support your physical and mental wellbeing through personalized, evidence-based guidance.</p>
+                <p><strong>I can help you with:</strong></p>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>🧠 Mental Health</h3>
+                        <p>Stress, anxiety, and emotional support</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>💪 Physical Health</h3>
+                        <p>Lifestyle, nutrition, and exercise</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>😴 Sleep & Rest</h3>
+                        <p>Better sleep hygiene</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎯 Goal Setting</h3>
+                        <p>Personalized action plans</p>
+                    </div>
+                </div>
+                <p style="margin-top: 30px; font-style: italic;">How can I assist you today?</p>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="sendQuickMessage('I need help with stress')">😰 Manage Stress</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Tips for better sleep')">😴 Sleep Better</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Healthy eating advice')">🥗 Healthy Eating</button>
+            <button class="quick-btn" onclick="sendQuickMessage('I feel anxious')">💭 Feeling Anxious</button>
+            <button class="quick-btn" onclick="sendQuickMessage('Exercise motivation')">🏃 Stay Active</button>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const userInput = document.getElementById('userInput');
+        
+        // Knowledge base for responses
+        const knowledgeBase = {
+            stress: {
+                keywords: ['stress', 'stressed', 'pressure', 'overwhelmed', 'burden'],
+                responses: [
+                    "I understand you're feeling stressed. Let's work through this together. First, take a deep breath. Can you tell me what's been causing the most stress lately - is it academic, social, or something else?",
+                    "Stress is very common among students. Here are some immediate techniques that can help:\n\n1. **Deep breathing**: Try the 4-7-8 technique (inhale 4 sec, hold 7 sec, exhale 8 sec)\n2. **Break tasks down**: Large projects feel less overwhelming in smaller chunks\n3. **Physical activity**: Even 10 minutes of walking can reduce stress hormones\n4. **Connect**: Talk to a friend or family member\n\nWhat aspect would you like to explore further?"
+                ]
+            },
+            anxiety: {
+                keywords: ['anxious', 'anxiety', 'worried', 'nervous', 'panic'],
+                responses: [
+                    "Thank you for sharing that you're feeling anxious. Anxiety is manageable, and you're taking a positive step by reaching out. Can you describe when you feel most anxious - is it during specific situations or more general?",
+                    "Here are some evidence-based strategies for managing anxiety:\n\n1. **Grounding technique**: Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste\n2. **Challenge anxious thoughts**: Ask yourself 'What evidence supports this worry?'\n3. **Progressive muscle relaxation**: Tense and release muscle groups\n4. **Limit caffeine**: It can increase anxiety symptoms\n\nIf anxiety is persistent, would you like information about professional support resources?"
+                ]
+            },
+            sleep: {
+                keywords: ['sleep', 'insomnia', 'tired', 'fatigue', 'rest', 'exhausted'],
+                responses: [
+                    "Quality sleep is crucial for both physical and mental health. Let's improve your sleep hygiene:\n\n1. **Consistent schedule**: Go to bed and wake up at the same time daily\n2. **Screen-free zone**: Avoid phones/computers 1 hour before bed\n3. **Cool, dark room**: 18-20°C is optimal\n4. **Avoid caffeine**: After 2 PM\n5. **Relaxation routine**: Reading, gentle stretching, or meditation\n\nHow many hours of sleep are you currently getting?",
+                    "Poor sleep often connects with stress and health. Creating a bedtime routine signals your body it's time to rest. Try these:\n\n- Light stretching or yoga\n- Journaling your thoughts\n- Listening to calm music\n- Warm (not hot) shower\n\nWhat's your biggest sleep challenge?"
+                ]
+            },
+            diet: {
+                keywords: ['eat', 'food', 'diet', 'nutrition', 'meal', 'hungry'],
+                responses: [
+                    "Nutrition significantly impacts your energy, mood, and health. Here are student-friendly healthy eating tips:\n\n1. **Regular meals**: Don't skip breakfast - it affects concentration\n2. **Hydration**: 8 glasses of water daily\n3. **Balanced plate**: Half vegetables, quarter protein, quarter whole grains\n4. **Healthy snacks**: Fruits, nuts, yogurt instead of processed foods\n5. **Limit**: Sugary drinks, excessive caffeine, fried foods\n\nWhat's your biggest nutrition challenge?",
+                    "Good nutrition doesn't have to be expensive or time-consuming. Budget-friendly healthy options:\n\n- Eggs (versatile protein)\n- Seasonal vegetables\n- Lentils and beans\n- Bananas and local fruits\n- Brown rice\n- Oats for breakfast\n\nWould you like specific meal ideas?"
+                ]
+            },
+            exercise: {
+                keywords: ['exercise', 'workout', 'active', 'fitness', 'physical activity', 'sport'],
+                responses: [
+                    "Great that you're thinking about physical activity! Exercise boosts mood, reduces stress, and improves health. You don't need a gym:\n\n**Easy ways to stay active:**\n- 30 minutes walking daily\n- Use stairs instead of elevators\n- Bodyweight exercises (push-ups, squats)\n- Dancing to music\n- Yoga (free YouTube videos)\n- Play sports with friends\n\nWhat type of activity interests you most?",
+                    "Starting small is key to building an exercise habit:\n\n**Week 1-2:** 10-15 min walks\n**Week 3-4:** 20 min walks + light stretching\n**Week 5+:** Add variety (jogging, sports, yoga)\n\nBest time for you: Morning (energizes), Evening (reduces stress), or Lunch break (breaks up study)?\n\nConsistency matters more than intensity!"
+                ]
+            },
+            depression: {
+                keywords: ['depressed', 'depression', 'sad', 'hopeless', 'worthless', 'suicide', 'kill myself'],
+                responses: [
+                    "I'm truly concerned about what you're sharing. These feelings are serious, and you deserve immediate professional support.\n\n**🚨 URGENT RESOURCES:**\n\n**Bangladesh:**\n- Kaan Pete Roi Helpline: 09612-112-125 (24/7)\n- National Mental Health Institute: 02-9007373\n- University Counseling Center: [Your campus number]\n\n**Crisis Text Line:** Available internationally\n\nThese feelings can improve with proper help. Would you like me to help you connect with a counselor? You're not alone in this.",
+                    "I hear that you're going through a very difficult time. Depression is a medical condition, not a personal weakness, and it's treatable.\n\n**Important signs to share with a professional:**\n- Persistent sadness (2+ weeks)\n- Loss of interest in activities\n- Changes in sleep/appetite\n- Difficulty concentrating\n- Thoughts of self-harm\n\n**Immediate steps:**\n1. Talk to someone you trust TODAY\n2. Contact university counseling services\n3. Call a helpline if thoughts worsen\n\nCan I help you locate campus mental health resources?"
+                ]
+            },
+            general: {
+                keywords: ['help', 'hi', 'hello', 'how are you', 'what can you do'],
+                responses: [
+                    "Hello! I'm your GREC Health Assistant, here to support your wellbeing. I can help with:\n\n🧠 **Mental Health:** Stress, anxiety, mood\n💪 **Physical Health:** Exercise, nutrition, sleep\n🎯 **Lifestyle:** Habits, goals, motivation\n🏥 **Health Education:** Disease prevention, healthy behaviors\n\nWhat would you like to discuss today?",
+                    "Hi there! I'm designed to provide personalized health support for university students. I can:\n\n- Listen without judgment\n- Provide evidence-based advice\n- Help you set achievable health goals\n- Connect you with resources when needed\n- Support your mental and physical wellbeing\n\nWhat's on your mind?"
+                ]
+            }
+        };
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (!isUser) {
+                const botName = document.createElement('div');
+                botName.className = 'bot-name';
+                botName.textContent = 'Health Assistant';
+                contentDiv.appendChild(botName);
+            }
+            
+            const textNode = document.createElement('div');
+            textNode.style.whiteSpace = 'pre-line';
+            textNode.textContent = text;
+            contentDiv.appendChild(textNode);
+            
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typing-indicator';
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator active';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            
+            typingDiv.appendChild(indicator);
+            chatArea.appendChild(typingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function getBotResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            // Check for crisis keywords first
+            const crisisKeywords = ['suicide', 'kill myself', 'want to die', 'end my life', 'no point living'];
+            if (crisisKeywords.some(keyword => lowerMessage.includes(keyword))) {
+                return knowledgeBase.depression.responses[0];
+            }
+            
+            // Check each category
+            for (const [category, data] of Object.entries(knowledgeBase)) {
+                if (data.keywords.some(keyword => lowerMessage.includes(keyword))) {
+                    return data.responses[Math.floor(Math.random() * data.responses.length)];
+                }
+            }
+            
+            // Default response
+            return "Thank you for sharing that. I'm here to help with your health and wellbeing. Could you tell me more about what you're experiencing? You can ask me about:\n\n- Managing stress or anxiety\n- Improving sleep quality\n- Nutrition and healthy eating\n- Exercise and physical activity\n- Mental health support\n- General health concerns\n\nWhat would be most helpful for you right now?";
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Remove welcome screen if present
+            const welcomeScreen = document.querySelector('.welcome-screen');
+            if (welcomeScreen) {
+                welcomeScreen.remove();
+            }
+            
+            addMessage(message, true);
+            userInput.value = '';
+            
+            showTypingIndicator();
+            
+            // Simulate thinking time
+            setTimeout(() => {
+                removeTypingIndicator();
+                const response = getBotResponse(message);
+                addMessage(response, false);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function sendQuickMessage(message) {
+            userInput.value = message;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Focus input on load
+        window.addEventListener('load', () => {
+            userInput.focus();
+        });
+    </script>
+</body>
+</html>
